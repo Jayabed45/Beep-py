@@ -3,12 +3,18 @@ import numpy as np
 import time
 import platform
 
+import os
+
 # Platform-specific audio imports
 if platform.system() == "Windows":
     import winsound
 else:
-    import os
     import subprocess
+
+# Directory to save motion-triggered images
+SAVE_DIR = "detections"
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR)
 
 # Initialize webcam
 cap = cv2.VideoCapture(0)
@@ -66,12 +72,19 @@ while cap.isOpened():
         
         # Trigger alert with cooldown period
         if current_time - last_alert_time > alert_cooldown:
+            print("Motion detected!")
             if platform.system() == "Windows":
                 winsound.Beep(BEEP_FREQUENCY, BEEP_DURATION)
             elif platform.system() == "Darwin":  # macOS
                 os.system('afplay /System/Library/Sounds/Ping.aiff &')
             elif platform.system() == "Linux":
                 os.system('aplay /usr/share/sounds/speech-dispatcher/test.wav &')
+
+            # Save the frame with motion
+            timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+            filename = os.path.join(SAVE_DIR, f"motion_{timestamp}.jpg")
+            cv2.imwrite(filename, display_frame)
+            print(f"Saved image: {filename}")
             
             last_alert_time = current_time
     
